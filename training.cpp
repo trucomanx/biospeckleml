@@ -1,13 +1,13 @@
-/** \example principal_arbol.cpp
+/** \example training.cpp
  *  \brief Programa para el testeo de las funciones.
     
 Para compilar o código principal.cpp:
 \code{.sh}
-    g++ -static -o principal_arbol principal_arbol.cpp -lpdsnnmm -lpdsmlmm -lpdsspmm  -lpdscamm -lpdsramm
+    g++ -static -o training training.cpp -lpdsnnmm -lpdsmlmm -lpdsspmm  -lpdscamm -lpdsramm
 \endcode
 Para executar o programa:
 \code{.sh}
-    ./principal_arbol
+    ./training
 \endcode  
  */
     
@@ -16,39 +16,34 @@ Para executar o programa:
 #include <Pds/Ca>
 #include <Pds/Sp>
 #include <Pds/Ml>
-#include <Pds/Nn>
-
-
-std::string dirpath ="/mnt/boveda/DATASETs/BIOSPECKLE/cafe-biospeckle/sem1";
-std::string pattern ="*.bmp";
-std::string imglabel="/mnt/boveda/DATASETs/BIOSPECKLE/cafe-biospeckle/sem1.bmp";
-std::string output  ="./output";
+//#include <Pds/Nn>
 
 #include "headers/extra_preproccesing.cpp"
 #include "headers/extra_postproccesing.cpp"
 
 
+//inputs
+//std::string training_path ="/mnt/boveda/DATASETs/BIOSPECKLE/cafe-biospeckle/training";
+std::string dirpath ="/mnt/boveda/DATASETs/BIOSPECKLE/cafe-biospeckle/training/sem1";
+std::string pattern ="*.bmp";
+std::string imglabel="/mnt/boveda/DATASETs/BIOSPECKLE/cafe-biospeckle/training/sem1.bmp";
+
+// outputs
+std::string outputpath ="output";
+std::string modelpath  ="model";
+
 int main(void)
 {
-
+    DatStruct DS;
+    // Obtem DS.X y DS.Y
+    DS=pre_proccesing(dirpath,pattern,imglabel);
+    
     ////////////////////////////////////////////////////////////////////////////
     // ETAPA 1
     
-    DatStruct DS;
-    // Obtem DS.X y DS.Y
-    DS=pre_proccesing2(dirpath,pattern,imglabel);
-    std::cout<<std::endl;
-        
-    ////////////////////////////////////////////////////////////////////////////
-    // ETAPA 2
-    
     // Split data
-    Pds::Ra::Tic();
     Pds::DataSetBlock Dat=Pds::DataSet::Split(DS.X,DS.Y,1,1,48);	
-    Pds::Ra::Toc();
-    
-    std::cout<<"Dat.Ytr.Min():"<<Dat.Ytr.Min()<<"\n";
-    std::cout<<"Dat.Ytr.Max():"<<Dat.Ytr.Max()<<"\n";
+
     // Ploting training data
     std::cout<<"Training samples: "<<Dat.Ytr.Size()<<std::endl;
     
@@ -56,8 +51,8 @@ int main(void)
     Pds::Octave::YLabel="Std";
     Pds::Octave::ZLabel="AVD";
     Pds::Octave::Plot::ScatterX3DY( Dat.Xtr,Dat.Ytr,
-                                    output+Pds::Ra::FileSep+"dataset_training.m",
-                                    output+Pds::Ra::FileSep+"dataset_training.png");	
+                                    outputpath+Pds::Ra::FileSep+"dataset_training.m",
+                                    outputpath+Pds::Ra::FileSep+"dataset_training.png");
     
     // Feature scaling !!!!!!!!!!!!!!!!!!!!!!!!!!!
     Pds::Vector Mean(Dat.Xtr.Ncol());
@@ -68,21 +63,30 @@ int main(void)
     Dat.Xtt.NormalizeColsWith(Mean,Std);
     DS.X.NormalizeColsWith(Mean,Std);
     ////////////////////////////////////////////////////////////////////////////
-    // ETAPA 3
-     
+    // ETAPA 2
+    
     Pds::Matrix Yeval;
+    unsigned int M=3;
+    Pds::Matrix F;
+
+    Pds::IterationConf Conf; 
+    Conf.Show=true; Conf.SetMinError(1e-6);Conf.SetMaxIter(10000);Conf.SetLambda(0.02);
     
-    // Entrenando un arbol
-    Pds::DecisionTree::Counter=0;
-    Pds::DecisionTree Arbol(Dat.Xtr,Dat.Ytr,0.9,8);
-    std::cout<<"Pds::DecisionTree::Counter: "<<Pds::DecisionTree::Counter<<std::endl;
+    F=Pds::Kernel::Polynomial(Dat.Xtr,M);
+
+    Pds::Perceptron Neurona(Conf,F,Dat.Ytr);
+    Pds::Vector W=Neurona.GetW();
+    W.Save(modelpath+Pds::Ra::FileSep+"LogisticModel.dat");
     
-    // Evaluate el arbol
-    Yeval=Arbol.Evaluate(Dat.Xcv);
+    Neurona.Print("\nNeurona:\n");
+    
+    // Evaluate training data
+    F=Pds::Kernel::Polynomial(Dat.Xcv,M);
+    Yeval=Neurona.Evaluate(F);
     
     Pds::Octave::Plot::ScatterX3DY( Dat.Xcv,Yeval,
-                                    output+Pds::Ra::FileSep+"dataset_crossval.m",
-                                    output+Pds::Ra::FileSep+"dataset_crossval.png");	
+                                    outputpath+Pds::Ra::FileSep+"dataset_crossval.m",
+                                    outputpath+Pds::Ra::FileSep+"dataset_crossval.png");	
     
     // Metrics of training
     Pds::ClassificationMetrics Metrics; 
@@ -90,16 +94,17 @@ int main(void)
     Metrics.Print("\n");
 
     ////////////////////////////////////////////////////////////////////////////
-    // ETAPA 4
-    
-    // Evaluate el arbol
-    Yeval=Arbol.Evaluate(DS.X);
+    // ETAPA 3
+
+    // Evaluate training data
+    F=Pds::Kernel::Polynomial(DS.X,M);
+    Yeval=Neurona.Evaluate(F);
     
     // Convierto un vector columna en una matriz (imagen)
     Yeval.Reshape(DS.Nlin,DS.Ncol); 
     
     // Post procesado (plot) de la matriz Yeval.
-    post_proccesing1(output,Yeval);
+    post_proccesing1(outputpath,Yeval,"gray");
 
     return 0;
 }

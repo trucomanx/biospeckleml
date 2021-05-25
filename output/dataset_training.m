@@ -8047,6 +8047,6 @@ set(hy,'fontsize',FONTSIZE);
 set(hz,'fontsize',FONTSIZE);
 set(ha,'fontsize',FONTSIZE);
 refresh();
-saveas (h,'./output/dataset_training.png');
+saveas (h,'output/dataset_training.png');
 
 
