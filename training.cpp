@@ -31,6 +31,9 @@ std::string imglabel="/mnt/boveda/DATASETs/BIOSPECKLE/cafe-biospeckle/training/s
 // outputs
 std::string outputpath ="output";
 std::string modelpath  ="model";
+std::string filename_w="LogisticModelW.dat";
+std::string filename_mean="FeatureScalingMean.dat";
+std::string filename_std="FeatureScalingStd.dat";
 
 int main(void)
 {
@@ -75,8 +78,7 @@ int main(void)
     F=Pds::Kernel::Polynomial(Dat.Xtr,M);
 
     Pds::Perceptron Neurona(Conf,F,Dat.Ytr);
-    Pds::Vector W=Neurona.GetW();
-    W.Save(modelpath+Pds::Ra::FileSep+"LogisticModel.dat");
+    Neurona.GetW().Save(modelpath+Pds::Ra::FileSep+filename_w);
     
     Neurona.Print("\nNeurona:\n");
     
