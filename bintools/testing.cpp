@@ -8,7 +8,10 @@ Para compilar o código principal.cpp:
 Para executar o programa:
 \code{.sh}
     ./testing
-\endcode  
+\endcode
+testado con: libpdsspmm-0.1.1.tar.gz
+testado con: libpdsramm-0.1.1.tar.gz
+testado con: libpdsmlmm-0.1.1.tar.gz
  */
     
 #include <cmath>
@@ -35,9 +38,35 @@ std::string filename_std ="FeatureScalingStd.dat";
 std::string outputpath ="output_testing";
 
 
+Pds::CmdHelp init_help(void)
+{    
+    Pds::CmdHelp D("testing","0.0.1");
+    
+    D.SetCommandExample("testing --dir /path/to/dir --model-dir /path/to/model --out-dir \"/path/to/outdir\"");
+    D.AddParam(0,"--help"     ,"-h","Habilita comentario de ajuda y finaliza el programa.","no habilitado");
+    D.AddParam(1,"--dir"      ,"-d","Directorio de entrada de datos.",dirpath);
+    D.AddParam(1,"--model-dir","-m","Directorio de entrada del modelo.",modelpath);
+    D.AddParam(1,"--out-dir"  ,"-o","Archivo de salida.",outputpath);
+    
+    return D;
+}
 
-int main(void)
+int main(int argc, char *argv[])
 {
+    Pds::CmdHelp Help=init_help();
+    
+    if( Pds::Ra::ExistArgument(argc,argv,"--help","-h") )
+    {
+        Help.Print();
+        return 0;
+    }
+
+    dirpath    = Pds::Ra::GetStringArgument(argc,argv,"--dir","-d",dirpath);
+    modelpath  = Pds::Ra::GetStringArgument(argc,argv,"--model-dir","-m",modelpath);
+    outputpath = Pds::Ra::GetStringArgument(argc,argv,"--out-dir","-o",outputpath);
+    
+    /////////////////////////////////////////////////////////////////////
+    
     Pds::ClassificationMetrics Metrics; 
     std::string filepath;
     FeatureBlock DS;
@@ -59,7 +88,7 @@ int main(void)
     // Loading data                                        
     preproccesing::reading_input_files(dirpath,ext_x,ext_y,FileXdat,FileYdat);
     
-    for(unsigned int k=0;k<FileXdat[k].size();k++)
+    for(unsigned int k=0;k<FileXdat.size();k++)
     {
         DS=preproccesing::get_featureblock_of_one_sample(FileXdat[k],FileYdat[k]);
         

@@ -3,12 +3,15 @@
     
 Para compilar o código principal.cpp:
 \code{.sh}
-    g++ -static -o training training.cpp -lpdsnnmm -lpdsmlmm -lpdsspmm  -lpdscamm -lpdsramm -Wall -Wextra
+    g++ -static -o training training.cpp -lpdsmlmm -lpdsspmm -lpdsramm -Wall -Wextra
 \endcode
 Para executar o programa:
 \code{.sh}
     ./training
-\endcode  
+\endcode
+testado con: libpdsspmm-0.1.1.tar.gz
+testado con: libpdsramm-0.1.1.tar.gz
+testado con: libpdsmlmm-0.1.1.tar.gz 
  */
     
 #include <cmath>
@@ -39,9 +42,34 @@ std::string filename_w   ="LogisticModelW.dat";
 std::string filename_mean="FeatureScalingMean.dat";
 std::string filename_std ="FeatureScalingStd.dat";
 
+Pds::CmdHelp init_help(void)
+{    
+    Pds::CmdHelp D("training","0.0.1");
+    
+    D.SetCommandExample("training --dir /path/to/dir --out-dir \"/path/to/outdir\"");
+    D.AddParam(0,"--help"   ,"-h","Habilita comentario de ajuda y finaliza el programa.","no habilitado");
+    D.AddParam(1,"--dir"    ,"-d","Directorio de entrada.",dirpath);
+    D.AddParam(1,"--out-dir","-o","Archivo de salida.",outputpath);
+    
+    return D;
+}
 
-int main(void)
+
+int main(int argc, char *argv[])
 {
+    Pds::CmdHelp Help=init_help();
+    
+    if( Pds::Ra::ExistArgument(argc,argv,"--help","-h") )
+    {
+        Help.Print();
+        return 0;
+    }
+
+    dirpath    = Pds::Ra::GetStringArgument(argc,argv,"--dir","-d",dirpath);
+    outputpath = Pds::Ra::GetStringArgument(argc,argv,"--out-dir","-o",outputpath);
+    
+    /////////////////////////////////////////////////////////////////////
+    
     Pds::ClassificationMetrics Metrics; 
     FeatureBlock DS;
     ModelBlock Model;
