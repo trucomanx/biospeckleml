@@ -1,3 +1,9 @@
+# Bibliotecas necesarias
+
+    https://sourceforge.net/projects/libpdsmm/files/sources/libpdrapmm
+    https://sourceforge.net/projects/libpdsmm/files/sources/libpdsspmm
+    https://sourceforge.net/projects/libpdsmm/files/sources/libpdmlpmm
+
 # evaluate.cpp
 
 Evalua un conjunto de archivos *.Xdat desde un directorio.
