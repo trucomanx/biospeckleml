@@ -1,2 +1,5 @@
 bintools/output_testing
 bintools/output_evaluate
+bintools/evaluate
+bintools/testing
+bintools/training
