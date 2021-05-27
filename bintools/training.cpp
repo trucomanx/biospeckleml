@@ -3,7 +3,7 @@
     
 Para compilar o código principal.cpp:
 \code{.sh}
-    g++ -static -o training training.cpp -lpdsnnmm -lpdsmlmm -lpdsspmm  -lpdscamm -lpdsramm
+    g++ -static -o training training.cpp -lpdsnnmm -lpdsmlmm -lpdsspmm  -lpdscamm -lpdsramm -Wall -Wextra
 \endcode
 Para executar o programa:
 \code{.sh}
@@ -24,6 +24,7 @@ Para executar o programa:
 #include "headers/preproccesing.cpp"
 #include "headers/postproccesing.cpp"
 #include "headers/octaveplot.cpp"
+#include "headers/model.cpp"
 
 //inputs
 std::string dirpath ="dataset/training";
@@ -43,16 +44,14 @@ int main(void)
 {
     Pds::ClassificationMetrics Metrics; 
     FeatureBlock DS;
+    ModelBlock Model;
 
     Pds::Matrix Yeval;
     unsigned int M=3;
     Pds::Matrix F;
 
     Pds::IterationConf Conf; 
-    Conf.Show=true; 
-    Conf.SetMinError(1e-6);
-    Conf.SetMaxIter(10000);
-    Conf.SetLambda(0.02);
+    Conf.Show=true; Conf.SetMaxIter(10000); Conf.SetLambda(0.02);
         
     Pds::Ra::MakeDir(Pds::Ra::FullFile({outputpath,modelsubdir}));
     Pds::Ra::MakeDir(outputpath);
@@ -82,15 +81,19 @@ int main(void)
     Pds::Vector Std(Dat.Xtr.Ncol());
     
     Dat.Xtr.NormalizeCols(Mean,Std);
-    Dat.Xcv.NormalizeColsWith(Mean,Std);
-    Dat.Xtt.NormalizeColsWith(Mean,Std);
+    Model.Mean=Mean;
+    Model.Std=Std;
+    
+    Dat.Xcv.NormalizeColsWith(Model.Mean,Model.Std);
+    Dat.Xtt.NormalizeColsWith(Model.Mean,Model.Std);
+    
     
     // Trainig the model
     F=Pds::Kernel::Polynomial(Dat.Xtr,M);
-
     Pds::Perceptron Neurona(Conf,F,Dat.Ytr);
-    Neurona.Print("\nNeurona:\n");
-    std::cout<<"W.Size(): "<<Neurona.GetW().Size()<<std::endl;
+    Model.W=Neurona.GetW();
+    
+    Model.W.T().Print("\n Neurona:\n");
     
     // Evaluate cross-val data
     F=Pds::Kernel::Polynomial(Dat.Xcv,M);
@@ -108,10 +111,9 @@ int main(void)
     Metrics = Pds::ClassificationMetrics::Calculate(0.5,Yeval,Dat.Ytt);
     Metrics.Print("\nMetrics of testing data:\n");
     
-    // Saving data
-    Neurona.GetW().Save(Pds::Ra::FullFile({outputpath,modelsubdir,filename_w}));
-    Mean.Save(Pds::Ra::FullFile({outputpath,modelsubdir,filename_mean}));
-    Std.Save(Pds::Ra::FullFile({outputpath,modelsubdir,filename_std}));
+    // Saving model
+    std::string modelpath=Pds::Ra::FullFile({outputpath,modelsubdir});
+    model::save(Model,modelpath,filename_w,filename_mean,filename_std);
     
     return 0;
 }

@@ -21,6 +21,14 @@ struct FeatureBlock
 
 namespace preproccesing{
 
+    Pds::Matrix get_featureblock_of_one_sample_x(   const std::string &FileXdat,
+                                                    unsigned int &Nlin,
+                                                    unsigned int &Ncol);
+                                                    
+    Pds::Vector get_featureblock_of_one_sample_y(   const std::string &FileYdat,
+                                                    unsigned int &Nlin,
+                                                    unsigned int &Ncol);
+                                                            
     /** \brief Crea un FeatureBlock lista para ser usada en un algoritmo de clasificacion binaria.
      *  Esta es leida desde los archivos sample block x (FileXdat) e y (FileYdat). 
      *
@@ -78,23 +86,15 @@ namespace preproccesing{
 
 ////////////////////////////////////////////////////////////////////////////////
 
-FeatureBlock preproccesing::get_featureblock_of_one_sample( std::string FileXdat,
-                                                            std::string FileYdat)
+Pds::Matrix preproccesing::get_featureblock_of_one_sample_x(const std::string &FileXdat,
+                                                            unsigned int &Nlin,
+                                                            unsigned int &Ncol)
 {
-    FeatureBlock Dat;
-    FeatureBlock ERROR;
+    unsigned int radio=5;
     
     std::vector<Pds::Matrix> DATA;
-    Pds::Matrix IMG;
-    
-    Pds::Matrix Xraw;
-    
-    unsigned int radio=5;
-    unsigned int Ylimear=128;
-    
     std::vector<std::string> FilenameBmpX;
-    std::vector<std::string> FilenameBmpY;
-    
+        
     // Load Xraw
     FilenameBmpX=Pds::Ra::GenSignificativeLines(FileXdat);
     
@@ -102,11 +102,11 @@ FeatureBlock preproccesing::get_featureblock_of_one_sample( std::string FileXdat
     if(DATA.size()==0)
     {
         pds_print_error_message("Problems loading files list in: "+FileXdat);
-        return ERROR;
+        return Pds::Matrix();
     }
     
-    Dat.Nlin=DATA[0].Nlin();
-    Dat.Ncol=DATA[0].Ncol();
+    Nlin=DATA[0].Nlin();
+    Ncol=DATA[0].Ncol();
     
     DATA=Pds::Image::SpatialMeanFilterInBlock(DATA,radio);
     
@@ -114,20 +114,65 @@ FeatureBlock preproccesing::get_featureblock_of_one_sample( std::string FileXdat
     Pds::Matrix STD= Pds::Image::TemporalStd(DATA,U);
     Pds::Matrix AVD= Pds::Image::AVD(DATA);
     
-    Dat.X=Pds::MergeHor({Pds::Vector(U),Pds::Vector(STD),Pds::Vector(AVD)});
+    Pds::Matrix X=Pds::MergeHor({Pds::Vector(U),Pds::Vector(STD),Pds::Vector(AVD)});
     DATA.clear();
+    return X;
+}
+
+Pds::Vector preproccesing::get_featureblock_of_one_sample_y(const std::string &FileYdat,
+                                                            unsigned int &Nlin,
+                                                            unsigned int &Ncol)
+{
+    Pds::Matrix IMG;
+    Pds::Vector Y;
+    unsigned int Ylimear=128;
+    
+    std::vector<std::string> FilenameBmpY=Pds::Ra::GenSignificativeLines(FileYdat); 
+    if(FilenameBmpY.size()==0)
+    {
+        pds_print_error_message("Problems loading files list in: "+FileYdat);
+        return Pds::Matrix();
+    }
+    
+    IMG=Pds::Image::BmpToGrayMatrix(FilenameBmpY[0]);
+    
+    Nlin=IMG.Nlin();
+    Ncol=IMG.Ncol();
+    
+    Y.Vectorize(IMG);
+    Y = Y.Geq(Ylimear);
+    return Y;
+}
+
+FeatureBlock preproccesing::get_featureblock_of_one_sample( std::string FileXdat,
+                                                            std::string FileYdat)
+{
+    FeatureBlock Dat;
+    FeatureBlock ERROR; ERROR.X.MakeEmpty(); ERROR.Y.MakeEmpty();
+    
+    // Load X  
+    Dat.X=get_featureblock_of_one_sample_x(FileXdat,Dat.Nlin,Dat.Ncol);
+    if(Dat.X.IsEmpty())
+    {
+        pds_print_error_message("Problems loading files list in: "+FileXdat);
+        return ERROR;
+    }                                             
     
     // Load Y
-    FilenameBmpY=Pds::Ra::GenSignificativeLines(FileYdat); 
-    if(FilenameBmpY.size()==0)
+    unsigned int Nlin,Ncol;
+    Dat.Y = preproccesing::get_featureblock_of_one_sample_y(FileYdat,Nlin,Ncol);
+    if(Dat.Y.IsEmpty())
     {
         pds_print_error_message("Problems loading files list in: "+FileYdat);
         return ERROR;
     }
     
-    IMG=Pds::Image::BmpToGrayMatrix(FilenameBmpY[0]);
-    Dat.Y.Vectorize(IMG);
-    Dat.Y = Dat.Y.Geq(Ylimear);
+    // verifico tamanhos
+    if((Dat.Nlin!=Nlin)||(Dat.Ncol!=Ncol))
+    {
+        pds_print_error_message("Tamaños diferentes entre: \n"+FileXdat+"\n"+FileYdat+"\n");
+        return ERROR;
+    }
     
     // Mostrando dadtos
     std::cout<<" filepath X: "<<FileXdat<<std::endl;

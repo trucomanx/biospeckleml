@@ -1,13 +1,13 @@
-/** \example testing.cpp
+/** \example evaluate.cpp
  *  \brief Programa para el testeo de las funciones.
     
 Para compilar o código principal.cpp:
 \code{.sh}
-    g++ -static -o testing testing.cpp -lpdsmlmm -lpdsspmm -lpdsramm -Wall -Wextra
+    g++ -static -o evaluate evaluate.cpp -lpdsmlmm -lpdsspmm -lpdsramm -Wall -Wextra
 \endcode
 Para executar o programa:
 \code{.sh}
-    ./testing
+    ./evaluate
 \endcode  
  */
     
@@ -21,9 +21,8 @@ Para executar o programa:
 #include "headers/model.cpp"
 
 //inputs data
-std::string dirpath="dataset/testing";
+std::string dirpath="dataset/evaluate";
 std::string ext_x="Xdat";
-std::string ext_y="Ydat";
 
 // input model
 std::string modelpath    ="output_training/model";
@@ -32,21 +31,18 @@ std::string filename_mean="FeatureScalingMean.dat";
 std::string filename_std ="FeatureScalingStd.dat";
 
 // outputs
-std::string outputpath ="output_testing";
+std::string outputpath ="output_evaluate";
 
 
 
 int main(void)
-{
-    Pds::ClassificationMetrics Metrics; 
-    std::string filepath;
-    FeatureBlock DS;
-    
-    Pds::Matrix Yeval;
+{ 
     Pds::Matrix F;
+    Pds::Matrix X;
+    Pds::Matrix Yeval;
+    unsigned int Nlin,Ncol;
     
     std::vector<std::string> FileXdat;
-    std::vector<std::string> FileYdat;
     
     Pds::Ra::MakeDir(outputpath);
 
@@ -57,25 +53,24 @@ int main(void)
 
     
     // Loading data                                        
-    preproccesing::reading_input_files(dirpath,ext_x,ext_y,FileXdat,FileYdat);
+    FileXdat=Pds::Ra::GetFiles(dirpath,"*."+ext_x,"");
     
-    for(unsigned int k=0;k<FileXdat[k].size();k++)
+    for(unsigned int k=0;k<FileXdat.size();k++)
     {
-        DS=preproccesing::get_featureblock_of_one_sample(FileXdat[k],FileYdat[k]);
+        std::cout<<"working in: "<<FileXdat[k]<<std::endl;
+        
+        X=preproccesing::get_featureblock_of_one_sample_x(FileXdat[k],Nlin,Ncol);
         
         // Feature scaling
-        DS.X.NormalizeColsWith(Model.Mean,Model.Std);
+        X.NormalizeColsWith(Model.Mean,Model.Std);
         Pds::Perceptron Neurona(Model.W);
 
         // Evaluate data
-        F=Pds::Kernel::Polynomial(DS.X,M);
+        F=Pds::Kernel::Polynomial(X,M);
         Yeval=Neurona.Evaluate(F);
         
-        Metrics = Pds::ClassificationMetrics::Calculate(0.5,Yeval,DS.Y);
-        Metrics.Print("\nMetrics of testing data:\n");
-        
         // Convierto un vector columna en una matriz (imagen)
-        Yeval.Reshape(DS.Nlin,DS.Ncol); 
+        Yeval.Reshape(Nlin,Ncol); 
         
         // Post procesado (plot) de la matriz Yeval.
         postproccesing::create_outputfiles(outputpath,Yeval,Pds::Ra::Filename(FileXdat[k]));
