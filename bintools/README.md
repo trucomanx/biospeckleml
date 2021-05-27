@@ -6,7 +6,7 @@
 
 # evaluate.cpp
 
-Evalua un conjunto de archivos *.Xdat desde un directorio.
+Evalua un modelp a partir de un conjunto de archivos *.Xdat en un directorio.
 
 compilar:
 
@@ -14,11 +14,11 @@ compilar:
 
 comando:
 
-    ./evaluate
+    ./evaluate -h
 
 # testing.cpp
 
-Evalua y mide un conjunto de archivos *.Xdat y *.Ydat desde un directorio.
+Evalua y mide un modelo a partir de un conjunto de archivos *.Xdat y *.Ydat en un directorio.
 
 compilar:
 
@@ -26,12 +26,12 @@ compilar:
 
 comando:
 
-    ./testing
+    ./testing -h
 
 
 # training.cpp
 
-Entrena, evalua y mide un conjunto de archivos *.Xdat y *.Ydat desde un directorio.
+Entrena, evalua y mide un medole a partir de conjunto de archivos *.Xdat y *.Ydat en un directorio.
 
 compilar:
 
@@ -39,7 +39,7 @@ compilar:
 
 comando:
 
-    ./training
+    ./training -h
 
 
 
