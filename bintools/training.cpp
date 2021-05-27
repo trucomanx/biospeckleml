@@ -18,26 +18,52 @@ Para executar o programa:
 #include <Pds/Ml>
 //#include <Pds/Nn>
 
+#include <sys/stat.h>
+#include <sys/types.h>
+
 #include "headers/extra_preproccesing.cpp"
 #include "headers/extra_postproccesing.cpp"
 
 
 //inputs
-//std::string training_path ="/mnt/boveda/DATASETs/BIOSPECKLE/cafe-biospeckle/training";
-std::string dirpath ="/mnt/boveda/DATASETs/BIOSPECKLE/cafe-biospeckle/training/sem1";
+std::string dirpath ="/mnt/boveda/DATASETs/BIOSPECKLE/cafe-biospeckle/sem1";
 std::string pattern ="*.bmp";
-std::string imglabel="/mnt/boveda/DATASETs/BIOSPECKLE/cafe-biospeckle/training/sem1.bmp";
+std::string imglabel="/mnt/boveda/DATASETs/BIOSPECKLE/cafe-biospeckle/sem1.bmp";
 
 // outputs
-std::string outputpath ="output";
+std::string outputpath ="output_training";
 std::string modelpath  ="model";
 std::string filename_w="LogisticModelW.dat";
 std::string filename_mean="FeatureScalingMean.dat";
 std::string filename_std="FeatureScalingStd.dat";
 
+
+void octave_plot_data( const std::string &outputpath,
+                        const Pds::Matrix &X,
+                        const Pds::Matrix &Y,
+                        const std::string &prename)
+{
+    Pds::Octave::XLabel="Mean";
+    Pds::Octave::YLabel="Std";
+    Pds::Octave::ZLabel="AVD";
+    std::string filename_m  =outputpath+Pds::Ra::FileSep+prename+".m";
+    std::string filename_png=outputpath+Pds::Ra::FileSep+prename+".png";
+    
+    std::cout<<"\n";
+    std::cout<<"+++ Printing data using OCTAVE ...\n";
+    Pds::Ra::Tic();
+    Pds::Octave::Plot::ScatterX3DY( X,Y,filename_m,filename_png);
+    std::cout<<"+++ ";Pds::Ra::Toc();
+    std::cout<<"+++ Files "+outputpath+Pds::Ra::FileSep+prename+".* were printed.\n";
+}
+
 int main(void)
 {
+    Pds::Ra::MakeDir(outputpath+Pds::Ra::FileSep+modelpath);
+    Pds::Ra::MakeDir(outputpath);
+
     DatStruct DS;
+ 
     // Obtem DS.X y DS.Y
     DS=pre_proccesing(dirpath,pattern,imglabel);
     
@@ -50,12 +76,7 @@ int main(void)
     // Ploting training data
     std::cout<<"Training samples: "<<Dat.Ytr.Size()<<std::endl;
     
-    Pds::Octave::XLabel="Mean";
-    Pds::Octave::YLabel="Std";
-    Pds::Octave::ZLabel="AVD";
-    Pds::Octave::Plot::ScatterX3DY( Dat.Xtr,Dat.Ytr,
-                                    outputpath+Pds::Ra::FileSep+"dataset_training.m",
-                                    outputpath+Pds::Ra::FileSep+"dataset_training.png");
+    octave_plot_data(outputpath,Dat.Xtr,Dat.Ytr,"dataset_training");
     
     // Feature scaling !!!!!!!!!!!!!!!!!!!!!!!!!!!
     Pds::Vector Mean(Dat.Xtr.Ncol());
@@ -78,17 +99,14 @@ int main(void)
     F=Pds::Kernel::Polynomial(Dat.Xtr,M);
 
     Pds::Perceptron Neurona(Conf,F,Dat.Ytr);
-    Neurona.GetW().Save(modelpath+Pds::Ra::FileSep+filename_w);
-    
+    Neurona.GetW().Save(Pds::Ra::FullFile({outputpath,modelpath,filename_w}));
     Neurona.Print("\nNeurona:\n");
     
     // Evaluate training data
     F=Pds::Kernel::Polynomial(Dat.Xcv,M);
     Yeval=Neurona.Evaluate(F);
     
-    Pds::Octave::Plot::ScatterX3DY( Dat.Xcv,Yeval,
-                                    outputpath+Pds::Ra::FileSep+"dataset_crossval.m",
-                                    outputpath+Pds::Ra::FileSep+"dataset_crossval.png");	
+    octave_plot_data(outputpath,Dat.Xcv,Yeval,"dataset_crossval");
     
     // Metrics of training
     Pds::ClassificationMetrics Metrics; 
