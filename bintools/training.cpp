@@ -21,43 +21,61 @@ Para executar o programa:
 #include <sys/stat.h>
 #include <sys/types.h>
 
-#include "headers/extra_preproccesing.cpp"
-#include "headers/extra_postproccesing.cpp"
-#include "headers/extra_octave_plot.cpp"
+#include "headers/preproccesing.cpp"
+#include "headers/postproccesing.cpp"
+#include "headers/octaveplot.cpp"
 
 //inputs
-std::string dirpath ="/mnt/boveda/DATASETs/BIOSPECKLE/cafe-biospeckle/sem1";
-std::string pattern ="*.bmp";
-std::string imglabel="/mnt/boveda/DATASETs/BIOSPECKLE/cafe-biospeckle/sem1.bmp";
+std::string dirpath ="dataset/training";
+std::string ext_x="Xdat";
+std::string ext_y="Ydat";
 
 // outputs
 std::string outputpath ="output_training";
-std::string modelpath  ="model";
-std::string filename_w="LogisticModelW.dat";
+std::string modelsubdir="model";
+
+std::string filename_w   ="LogisticModelW.dat";
 std::string filename_mean="FeatureScalingMean.dat";
-std::string filename_std="FeatureScalingStd.dat";
+std::string filename_std ="FeatureScalingStd.dat";
 
 
 int main(void)
 {
-    Pds::Ra::MakeDir(outputpath+Pds::Ra::FileSep+modelpath);
-    Pds::Ra::MakeDir(outputpath);
+    Pds::ClassificationMetrics Metrics; 
+    FeatureBlock DS;
 
-    DatStruct DS;
+    Pds::Matrix Yeval;
+    unsigned int M=3;
+    Pds::Matrix F;
+
+    Pds::IterationConf Conf; 
+    Conf.Show=true; 
+    Conf.SetMinError(1e-6);
+    Conf.SetMaxIter(10000);
+    Conf.SetLambda(0.02);
+        
+    Pds::Ra::MakeDir(Pds::Ra::FullFile({outputpath,modelsubdir}));
+    Pds::Ra::MakeDir(outputpath);
  
     // Obtem DS.X y DS.Y
-    DS=pre_proccesing(dirpath,pattern,imglabel);
-    
-    ////////////////////////////////////////////////////////////////////////////
-    // ETAPA 1
+    DS=preproccesing::get_featureblock_compound_samples(dirpath,ext_x,ext_y,0.2);
+    if(DS.X.IsEmpty())
+    {
+        pds_print_error_message("Problems finding samples *."+ext_x+" and *."+ext_y+" in: "+dirpath);
+        return 0;
+    }
     
     // Split data
-    Pds::DataSetBlock Dat=Pds::DataSet::Split(DS.X,DS.Y,1,1,48);	
+    Pds::DataSetBlock Dat=Pds::DataSet::Split(DS.X,DS.Y,1,1,23);	
+
+    std::cout<<"Used training samples: "<<Dat.Ytr.Nel()<<std::endl;
+    std::cout<<" Used crosval samples: "<<Dat.Ycv.Nel()<<std::endl;
+    std::cout<<" Used testing samples: "<<Dat.Ytt.Nel()<<std::endl;
+    std::cout<<"----------------------------------"<<std::endl;
+    std::cout<<"        Total samples: "<<DS.Y.Nel()<<std::endl;
 
     // Ploting training data
-    std::cout<<"Training samples: "<<Dat.Ytr.Size()<<std::endl;
-    
-    octave_plot_data(outputpath,Dat.Xtr,Dat.Ytr,"dataset_training");
+    octaveplot::featureX3DY(outputpath,Dat.Xtr,Dat.Ytr,"dataset_training");
     
     // Feature scaling !!!!!!!!!!!!!!!!!!!!!!!!!!!
     Pds::Vector Mean(Dat.Xtr.Ncol());
@@ -66,46 +84,34 @@ int main(void)
     Dat.Xtr.NormalizeCols(Mean,Std);
     Dat.Xcv.NormalizeColsWith(Mean,Std);
     Dat.Xtt.NormalizeColsWith(Mean,Std);
-    DS.X.NormalizeColsWith(Mean,Std);
-    ////////////////////////////////////////////////////////////////////////////
-    // ETAPA 2
     
-    Pds::Matrix Yeval;
-    unsigned int M=3;
-    Pds::Matrix F;
-
-    Pds::IterationConf Conf; 
-    Conf.Show=true; Conf.SetMinError(1e-6);Conf.SetMaxIter(10000);Conf.SetLambda(0.02);
-    
+    // Trainig the model
     F=Pds::Kernel::Polynomial(Dat.Xtr,M);
 
     Pds::Perceptron Neurona(Conf,F,Dat.Ytr);
-    Neurona.GetW().Save(Pds::Ra::FullFile({outputpath,modelpath,filename_w}));
     Neurona.Print("\nNeurona:\n");
+    std::cout<<"W.Size(): "<<Neurona.GetW().Size()<<std::endl;
     
-    // Evaluate training data
+    // Evaluate cross-val data
     F=Pds::Kernel::Polynomial(Dat.Xcv,M);
     Yeval=Neurona.Evaluate(F);
     
-    octave_plot_data(outputpath,Dat.Xcv,Yeval,"dataset_crossval");
-    
-    // Metrics of training
-    Pds::ClassificationMetrics Metrics; 
     Metrics = Pds::ClassificationMetrics::Calculate(0.5,Yeval,Dat.Ycv);
-    Metrics.Print("\n");
+    Metrics.Print("\nMetrics of cross-validation data:\n");
 
-    ////////////////////////////////////////////////////////////////////////////
-    // ETAPA 3
-
-    // Evaluate training data
-    F=Pds::Kernel::Polynomial(DS.X,M);
+    octaveplot::featureX3DY(outputpath,Dat.Xcv,Yeval,"dataset_crossval");
+    
+    // Evaluate testing data
+    F=Pds::Kernel::Polynomial(Dat.Xtt,M);
     Yeval=Neurona.Evaluate(F);
     
-    // Convierto un vector columna en una matriz (imagen)
-    Yeval.Reshape(DS.Nlin,DS.Ncol); 
+    Metrics = Pds::ClassificationMetrics::Calculate(0.5,Yeval,Dat.Ytt);
+    Metrics.Print("\nMetrics of testing data:\n");
     
-    // Post procesado (plot) de la matriz Yeval.
-    post_proccesing1(outputpath,Yeval,"gray");
-
+    // Saving data
+    Neurona.GetW().Save(Pds::Ra::FullFile({outputpath,modelsubdir,filename_w}));
+    Mean.Save(Pds::Ra::FullFile({outputpath,modelsubdir,filename_mean}));
+    Std.Save(Pds::Ra::FullFile({outputpath,modelsubdir,filename_std}));
+    
     return 0;
 }
