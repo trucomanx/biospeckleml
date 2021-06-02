@@ -9,9 +9,9 @@ Para executar o programa:
 \code{.sh}
     ./evaluate
 \endcode
-testado con: libpdsspmm-0.1.1.tar.gz
-testado con: libpdsramm-0.1.1.tar.gz
-testado con: libpdsmlmm-0.1.1.tar.gz
+testado con: libpdsspmm-0.1.2.tar.gz
+testado con: libpdsramm-0.1.2.tar.gz
+testado con: libpdsmlmm-0.1.2.tar.gz
  */
     
 #include <cmath>

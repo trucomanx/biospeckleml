@@ -3,7 +3,7 @@
     
 Para compilar o código principal.cpp:
 \code{.sh}
-    g++ -static -o listbmpfiles listbmpfiles.cpp -lpdsramm
+    g++ -static -o listbmpfiles listbmpfiles.cpp -lpdsramm -Wall -Wextra
 \endcode
 Para executar o programa:
 \code{.sh}
