@@ -25,7 +25,7 @@ void octaveplot::featureX3DY(   const std::string &outputpath,
     Pds::Octave::YLabel="Std";
     Pds::Octave::ZLabel="AVD";
     std::string filename_m  =outputpath+Pds::Ra::FileSep+prename+".m";
-    std::string filename_png=outputpath+Pds::Ra::FileSep+prename+".png";
+    std::string filename_png=prename+".png";
     
     std::cout<<"\n";
     std::cout<<"+++ Printing data using OCTAVE ...\n";

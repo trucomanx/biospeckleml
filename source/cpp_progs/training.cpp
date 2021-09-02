@@ -29,6 +29,7 @@ testado con: libpdsmlmm-0.1.2.tar.gz
 #include "headers/octaveplot.cpp"
 #include "headers/model.cpp"
 
+
 //inputs
 std::string dirpath ="dataset/training";
 std::string ext_x="Xdat";
@@ -42,48 +43,25 @@ std::string filename_w   ="LogisticModelW.dat";
 std::string filename_mean="FeatureScalingMean.dat";
 std::string filename_std ="FeatureScalingStd.dat";
 
-Pds::CmdHelp init_help(void)
-{    
-    Pds::CmdHelp D("training","0.0.1");
-    
-    D.SetCommandExample("training --dir /path/to/dir --out-dir \"/path/to/outdir\"");
-    D.AddParam(0,"--help"   ,"-h","Habilita comentario de ajuda y finaliza el programa.","no habilitado");
-    D.AddParam(1,"--dir"    ,"-d","Directorio de entrada.",dirpath);
-    D.AddParam(1,"--out-dir","-o","Archivo de salida.",outputpath);
-    
-    return D;
-}
 
+#include "training.hpp"
 
 int main(int argc, char *argv[])
 {
-    Pds::CmdHelp Help=init_help();
-    
-    if( Pds::Ra::ExistArgument(argc,argv,"--help","-h") )
-    {
-        Help.Print();
-        return 0;
-    }
-
-    dirpath    = Pds::Ra::GetStringArgument(argc,argv,"--dir","-d",dirpath);
-    outputpath = Pds::Ra::GetStringArgument(argc,argv,"--out-dir","-o",outputpath);
-    
-    /////////////////////////////////////////////////////////////////////
+    training_init(argc,argv,dirpath,outputpath);
     
     Pds::ClassificationMetrics Metrics; 
     FeatureBlock DS;
     ModelBlock Model;
-
-    Pds::Matrix Yeval;
     unsigned int M=3;
+    Pds::Matrix Yeval;
     Pds::Matrix F;
 
     Pds::IterationConf Conf; 
     Conf.Show=true; Conf.SetMaxIter(10000); Conf.SetLambda(0.02);
         
     Pds::Ra::MakeDir(Pds::Ra::FullFile({outputpath,modelsubdir}));
-    Pds::Ra::MakeDir(outputpath);
- 
+    
     // Obtem DS.X y DS.Y
     DS=preproccesing::get_featureblock_compound_samples(dirpath,ext_x,ext_y,0.2);
     if(DS.X.IsEmpty())
@@ -93,7 +71,9 @@ int main(int argc, char *argv[])
     }
     
     // Split data
-    Pds::DataSetBlock Dat=Pds::DataSet::Split(DS.X,DS.Y,1,1,23);	
+    Model.Mean=Pds::Vector(DS.X.Ncol());
+    Model.Std=Pds::Vector(DS.X.Ncol());
+    Pds::DataSetBlock Dat=Pds::DataSet::SplitAndScaling(DS.X,DS.Y,1,1,1,Model.Mean,Model.Std);
 
     std::cout<<"Used training samples: "<<Dat.Ytr.Nel()<<std::endl;
     std::cout<<" Used crosval samples: "<<Dat.Ycv.Nel()<<std::endl;
@@ -103,17 +83,6 @@ int main(int argc, char *argv[])
 
     // Ploting training data
     octaveplot::featureX3DY(outputpath,Dat.Xtr,Dat.Ytr,"dataset_training");
-    
-    // Feature scaling !!!!!!!!!!!!!!!!!!!!!!!!!!!
-    Pds::Vector Mean(Dat.Xtr.Ncol());
-    Pds::Vector Std(Dat.Xtr.Ncol());
-    
-    Dat.Xtr.NormalizeCols(Mean,Std);
-    Model.Mean=Mean;
-    Model.Std=Std;
-    
-    Dat.Xcv.NormalizeColsWith(Model.Mean,Model.Std);
-    Dat.Xtt.NormalizeColsWith(Model.Mean,Model.Std);
     
     
     // Trainig the model
@@ -125,7 +94,7 @@ int main(int argc, char *argv[])
     
     // Evaluate cross-val data
     F=Pds::Kernel::Polynomial(Dat.Xcv,M);
-    Yeval=Neurona.Evaluate(F);
+    Yeval=Neurona.Predict(F);
     
     Metrics = Pds::ClassificationMetrics::Calculate(0.5,Yeval,Dat.Ycv);
     Metrics.Print("\nMetrics of cross-validation data:\n");
@@ -134,7 +103,7 @@ int main(int argc, char *argv[])
     
     // Evaluate testing data
     F=Pds::Kernel::Polynomial(Dat.Xtt,M);
-    Yeval=Neurona.Evaluate(F);
+    Yeval=Neurona.Predict(F);
     
     Metrics = Pds::ClassificationMetrics::Calculate(0.5,Yeval,Dat.Ytt);
     Metrics.Print("\nMetrics of testing data:\n");
