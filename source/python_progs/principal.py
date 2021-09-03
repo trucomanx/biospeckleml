@@ -3,15 +3,21 @@ sys.path.append("extras")
 import files_module      as flmod
 import dataset_module    as datmod
 import biospeckle_module as biomod
+import numpy as np
 
-dirs=flmod.scan_all_subdirs("/home/fernando/Downloads/biospeckleml/source");
 
-[print(dirpath) for dirpath in dirs ]
+url_x_zip_files=[
+'https://www.dropbox.com/s/52vey50x8aqlida/data1.zip',
+'https://www.dropbox.com/s/4s03earcvn8rck2/data2.zip',
+'https://www.dropbox.com/s/9iiof3pta4175kv/data3.zip'
+]
 
-zipfile='/home/fernando/Dropbox/DATASET/biospeckle1/data1.zip';
+url_y_bmp_files=[
+'https://www.dropbox.com/s/0g924qmiajs5c8z/data1.bmp?dl=0',
+'https://www.dropbox.com/s/kfkkdauptr5azft/data2.bmp?dl=0',
+'https://www.dropbox.com/s/ym988qeway41tag/data3.bmp?dl=0'
+]
 
-datapack=biomod.datapack_from_zipfile(zipfile,pattern="*.bmp");
-mat=datmod.datapack_to_sample_dataset(datapack);
-print("mat[0]\n",mat[0])
-print("mat[1]\n",mat[1])
-print("mat[2]\n",mat[2])
+dirname='/home/fernando/Downloads/presentation-ocarina/sections';
+dirs=flmod.scan_all_subdirs(dirname);
+print(dirs)
