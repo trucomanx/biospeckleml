@@ -8,6 +8,8 @@ from mpl_toolkits import mplot3d
 ## concatenate nmatrix in a list
 def concatenate_list_of_data(data_x_pixel_list,data_y_pixel_list):
     n=0;
+    X_dataset=[];
+    y_dataset=[];
     for data_x,data_y in zip(data_x_pixel_list,data_y_pixel_list):
         if(n==0):
             X_dataset=data_x;
