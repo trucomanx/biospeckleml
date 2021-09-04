@@ -18,15 +18,28 @@ y_bmp_files=[
 ]
 
 
-
-
 data_x_list,data_y_list=datmod.create_dataset_list(x_zip_files,y_bmp_files)
-
 #datmod.plot_sample_of_dataset(data_x_list[0],data_y_list[0],'sample.png')
 
 
+data_x_pixel_list,data_y_pixel_list=datmod.dataset_list_to_pixel_dataset_list(data_x_list,data_y_list);
+#datmod.plot_pixel_dataset_list(data_x_pixel_list,data_y_pixel_list,png_filepath='scatter3d.png')
+data_x_list=[];data_y_list=[];
 
-data_x_pixel,data_y_pixel=datmod.dataset_list_to_pixel_dataset_list(data_x_list,data_y_list);
 
-datmod.plot_pixel_dataset_list(data_x_pixel,data_y_pixel,percent=0.01,png_filepath='scatter3d.png')
+################################################################################
+
+
+X_pixel,y_pixel=datmod.concatenate_list_of_data(data_x_pixel_list,data_y_pixel_list);
+data_x_pixel_list=[];data_y_pixel_list=[];
+
+from sklearn.model_selection import train_test_split
+X_train, X_test, y_train, y_test = train_test_split(X_pixel,y_pixel, test_size=0.33, random_state=42)
+
+from sklearn.linear_model import LogisticRegression
+logisticRegr = LogisticRegression();
+logisticRegr.fit(X_train, y_train);
+score = logisticRegr.score(X_test, y_test);
+print('score:',score)
+
 

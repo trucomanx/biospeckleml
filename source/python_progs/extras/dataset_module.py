@@ -5,6 +5,20 @@ from scipy import signal
 import matplotlib.pyplot as plt
 from mpl_toolkits import mplot3d
 
+## concatenate nmatrix in a list
+def concatenate_list_of_data(data_x_pixel_list,data_y_pixel_list):
+    n=0;
+    for data_x,data_y in zip(data_x_pixel_list,data_y_pixel_list):
+        if(n==0):
+            X_dataset=data_x;
+            y_dataset=data_y;
+        else:
+            X_dataset=np.concatenate((X_dataset,data_x),axis=0)
+            y_dataset=np.concatenate((y_dataset,data_y),axis=0)
+        n=n+1;
+    return X_dataset,y_dataset
+    
+
 ## Filter a datapack with a mean kernel of size ksize
 ## return a datapack filtered
 def datapack_spatial_mean_filter(datapack,ksize):
@@ -117,7 +131,7 @@ def dataset_list_to_pixel_dataset_list(data_x_list,data_y_list):
         dataset_y_res.append(data_y.flatten(flat_type));
     return dataset_x_res,dataset_y_res;
 
-def plot_pixel_dataset_list(data_x_list,data_y_list,percent=0.05,png_filepath='scatter3d.png'):
+def plot_pixel_dataset_list(data_x_list,data_y_list,percent=0.01,png_filepath='scatter3d.png'):
     dataset_x=[];
     dataset_y=[];
     n=0;
@@ -150,5 +164,6 @@ def plot_pixel_dataset_list(data_x_list,data_y_list,percent=0.05,png_filepath='s
     ax.set_zlabel('Std' , fontweight ='bold')
     ax.set_title(title, fontweight ='bold');
     fig.colorbar(sctt, ax = ax, shrink = 0.5, aspect = 5)
-    plt.show();
+    plt.savefig(png_filepath);
+    plt.show()
 
