@@ -6,9 +6,13 @@ from skimage import color
 from skimage import io
 import numpy as np
 
+
 import files_module      as flmod
 
-## return a list of numpy arrays
+## return a datapack from a zipfile
+##  zipfile: File path of a zip file with bmp files. 
+##           The files are sorted by natural name.
+## datapack: List of 2D numpy arrays
 def datapack_from_zipfile(zipfile,pattern="*.bmp",temporal_dir='temporal_dir'):
   print("working over: ",zipfile);
   shutil.unpack_archive(zipfile, temporal_dir)
@@ -19,7 +23,9 @@ def datapack_from_zipfile(zipfile,pattern="*.bmp",temporal_dir='temporal_dir'):
   bmp_files=natsorted(glob.glob(pattern_filepath));
   datapack=[];
   for data in bmp_files:
-    IMG=color.rgb2gray(io.imread(data));
+    IMG=io.imread(data);
+    if len(np.shape(IMG))>2 :
+        IMG=color.rgb2gray(IMG);
     datapack.append(np.array(IMG,dtype='f'));
   try:
     shutil.rmtree(temporal_dir)
@@ -27,6 +33,10 @@ def datapack_from_zipfile(zipfile,pattern="*.bmp",temporal_dir='temporal_dir'):
     print("Error: %s - %s." % (e.filename, e.strerror))
   return datapack
 
+
+## Datapack to avd matrix
+## datapack: List of 2D numpy arrays
+## avd: 2D numpy arrays
 def datapack_to_avd(datapack):
   avd=datapack[0]*0;
   L=len(datapack);
@@ -34,6 +44,10 @@ def datapack_to_avd(datapack):
     avd=avd+np.abs(datapack[n]-datapack[n-1])/(L-1.0);
   return avd;
 
+## Datapack to mean and std matrix
+## datapack: List of 2D numpy arrays
+##  std: 2D numpy arrays
+## mean: 2D numpy arrays
 def datapack_to_mean_and_std(datapack):
   mean=datapack[0]*0;
   std =datapack[0]*0;

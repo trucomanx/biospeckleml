@@ -5,19 +5,28 @@ import dataset_module    as datmod
 import biospeckle_module as biomod
 import numpy as np
 
-
-url_x_zip_files=[
-'https://www.dropbox.com/s/52vey50x8aqlida/data1.zip',
-'https://www.dropbox.com/s/4s03earcvn8rck2/data2.zip',
-'https://www.dropbox.com/s/9iiof3pta4175kv/data3.zip'
+x_zip_files=[
+'/home/fernando/Dropbox/DATASET/biospeckle1/data1.zip',
+'/home/fernando/Dropbox/DATASET/biospeckle1/data2.zip',
+'/home/fernando/Dropbox/DATASET/biospeckle1/data3.zip'
 ]
 
-url_y_bmp_files=[
-'https://www.dropbox.com/s/0g924qmiajs5c8z/data1.bmp?dl=0',
-'https://www.dropbox.com/s/kfkkdauptr5azft/data2.bmp?dl=0',
-'https://www.dropbox.com/s/ym988qeway41tag/data3.bmp?dl=0'
+y_bmp_files=[
+'/home/fernando/Dropbox/DATASET/biospeckle1/data1.bmp',
+'/home/fernando/Dropbox/DATASET/biospeckle1/data2.bmp',
+'/home/fernando/Dropbox/DATASET/biospeckle1/data3.bmp'
 ]
 
-dirname='/home/fernando/Downloads/presentation-ocarina/sections';
-dirs=flmod.scan_all_subdirs(dirname);
-print(dirs)
+
+
+
+data_x_list,data_y_list=datmod.create_dataset_list(x_zip_files,y_bmp_files)
+
+#datmod.plot_sample_of_dataset(data_x_list[0],data_y_list[0],'sample.png')
+
+
+
+data_x_pixel,data_y_pixel=datmod.dataset_list_to_pixel_dataset_list(data_x_list,data_y_list);
+
+datmod.plot_pixel_dataset_list(data_x_pixel,data_y_pixel,percent=0.01,png_filepath='scatter3d.png')
+
