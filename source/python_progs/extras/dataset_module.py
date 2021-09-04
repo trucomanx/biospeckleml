@@ -22,8 +22,9 @@ def concatenate_list_of_data(data_x_pixel_list,data_y_pixel_list):
     
 
 ## Filter a datapack with a mean kernel of size ksize
+## datapack: list od numpy array
 ## return a datapack filtered
-def datapack_spatial_mean_filter(datapack,ksize):
+def datapack_spatial_mean_filter(datapack,ksize=7):
     datapack_res=[];
     Kernel=np.ones((ksize,ksize))/(ksize*ksize*1.0);
     for IMG in datapack:
@@ -35,8 +36,8 @@ def datapack_spatial_mean_filter(datapack,ksize):
 ## Convert a datapack to sample 
 ## datapack: List of 2D numpy array
 ##   sample: 2D numpy array
-def datapack_to_sample_dataset(datapack):
-    datapack=datapack_spatial_mean_filter(datapack,5);
+def datapack_to_sample_dataset(datapack,ksize=7):
+    datapack=datapack_spatial_mean_filter(datapack,ksize);
     avd=biomod.datapack_to_avd(datapack);
     mean,std=biomod.datapack_to_mean_and_std(datapack);
     Sz=np.shape(avd);
@@ -66,7 +67,7 @@ def data_y_from_file(bmpfile):
     return np.array(img_y,dtype='f');
     
 ## create a dataset list from a zip and bmp file
-def create_dataset_list(x_zip_files,y_bmp_files):
+def create_dataset_list(x_zip_files,y_bmp_files,ksize=7):
     if len(x_zip_files)!=len(y_bmp_files):
         print('The list files have different sizes.');
         sys.exit();
@@ -76,7 +77,7 @@ def create_dataset_list(x_zip_files,y_bmp_files):
     for zipfile, bmpfile in zip(x_zip_files,y_bmp_files):
         ## Create x mat
         datapack=biomod.datapack_from_zipfile(zipfile);
-        mat=datapack_to_sample_dataset(datapack);
+        mat=datapack_to_sample_dataset(datapack,ksize);
         data_x_list.append(mat);
         
         ## Create y mat
@@ -119,15 +120,27 @@ def plot_sample_of_dataset(data_x,data_y,png_filepath='sample.png'):
     plt.show()
 
 
+def dataset_x_to_pixel_dataset_x(data_x, flat_type='F'):
+    Sz=np.shape(data_x);
+    
+    mat=np.zeros((Sz[1]*Sz[2],Sz[0]));
+    for n in range(Sz[0]):
+        mat[:,n]=data_x[n,:,:].flatten(flat_type);
+    return mat;
+    
+    
 def dataset_list_to_pixel_dataset_list(data_x_list,data_y_list):
     dataset_x_res=[];
     dataset_y_res=[];
     for data_x,data_y in zip(data_x_list,data_y_list):
         flat_type='F';
+        '''
         Sz=np.shape(data_x);
         mat=np.zeros((Sz[1]*Sz[2],Sz[0]));
         for n in range(Sz[0]):
             mat[:,n]=data_x[n,:,:].flatten(flat_type);
+        '''
+        mat=dataset_x_to_pixel_dataset_x(data_x, flat_type);
         
         dataset_x_res.append(mat);
         dataset_y_res.append(data_y.flatten(flat_type));

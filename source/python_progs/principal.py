@@ -1,8 +1,9 @@
 import sys
 sys.path.append("extras")
-import files_module      as flmod
+#import files_module      as flmod
 import dataset_module    as datmod
-import biospeckle_module as biomod
+#import biospeckle_module as biomod
+import modelpixel_module as modelmod
 import numpy as np
 
 x_zip_files=[
@@ -29,27 +30,35 @@ data_x_list=[];data_y_list=[];
 
 ################################################################################
 
+    
+model, score=modelmod.training_model(data_x_pixel_list,data_y_pixel_list,test_size=0.7);
 
-X_pixel,y_pixel=datmod.concatenate_list_of_data(data_x_pixel_list,data_y_pixel_list);
-data_x_pixel_list=[];data_y_pixel_list=[];
-
-from sklearn.linear_model import LogisticRegression
-from sklearn.preprocessing import PolynomialFeatures
-from sklearn.preprocessing import StandardScaler
-from sklearn.model_selection import train_test_split
-
-scaler = StandardScaler()
-scaler.fit(X_pixel);
-X_pixel=scaler.transform(X_pixel);
-
-poly = PolynomialFeatures(2,include_bias=False);
-X_pixel= poly.fit_transform(X_pixel);
-
-X_train, X_test, y_train, y_test = train_test_split(X_pixel,y_pixel, test_size=0.33, random_state=42)
-
-logisticRegr = LogisticRegression();
-logisticRegr.fit(X_train, y_train);
-score = logisticRegr.score(X_test, y_test);
 print('score:',score)
+print('model:',model)
+################################################################################
 
+
+
+import pickle
+with open("test.moddat", "wb") as fp:   #Pickling
+    pickle.dump(model, fp)
+
+'''
+with open("test.moddat", "rb") as fp:   # Unpickling
+    RES = pickle.load(fp)
+
+print(RES)
+'''
+
+################################################################################
+
+zipfile='/home/fernando/Dropbox/DATASET/biospeckle1/data1.zip';
+
+
+
+y_mat=modelmod.predict_model(model,zipfile);
+
+import matplotlib.pyplot as plt
+plt.imshow(y_mat)
+plt.show();
 

@@ -4,3 +4,5 @@ bintools/evaluate
 bintools/testing
 bintools/training
 /bintools/listbmpfiles
+/source/python_progs/test.moddat
+/source/python_progs/extras/__pycache__
