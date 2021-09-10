@@ -45,7 +45,6 @@ def training_model(data_x_list,data_y_list,test_size=0.7,show=False):
     ksize_best=3;
     confmat_best=[];
     for k in range(3,19,2):
-        print('Testing ksize_end:',k)
         model['ksizeend']=k;
         confmat=check_conf_matrix(model,data_x_list,data_y_list,threshold=0.5)
         
@@ -54,9 +53,10 @@ def training_model(data_x_list,data_y_list,test_size=0.7,show=False):
             score_best=score;
             ksize_best=k;
             confmat_best=confmat;
-        print('Obtained score:',score)
+        print('Testing ksize_end: ',k,'\tObtained score: ',score)
     
-    print("confmat:\n",confmat_best)
+    print("Best confmat:\n",confmat_best)
+    print("\n")
     
     model['ksizeend']=ksize_best;
     

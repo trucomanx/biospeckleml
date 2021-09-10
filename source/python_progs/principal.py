@@ -18,7 +18,7 @@ y_bmp_files=[
 '/home/fernando/Dropbox/DATASET/biospeckle1/data3.bmp'
 ]
 
-
+################################################################################
 data_x_list,data_y_list=datmod.create_dataset_list(x_zip_files,y_bmp_files)
 
 # Show only the first dataset: data_x_list[0],data_y_list[0]
@@ -29,10 +29,8 @@ model, score=modelmod.training_model(data_x_list,data_y_list,show=True,test_size
 
 print('score:',score)
 print('model:',model)
+
 ################################################################################
-
-
-
 import pickle
 with open("model.moddat", "wb") as fp:   #Pickling
     pickle.dump(model, fp)
@@ -45,10 +43,7 @@ print(RES)
 '''
 
 ################################################################################
-
 zipfile='/home/fernando/Dropbox/DATASET/biospeckle1/data1.zip';
-
-
 
 y_mat=modelmod.predict_model(model,zipfile);
 
