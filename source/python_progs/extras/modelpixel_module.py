@@ -11,10 +11,10 @@ from sklearn.model_selection import train_test_split
 def training_model(data_x_list,data_y_list,test_size=0.7,show=False):
     data_x_pixel_list,data_y_pixel_list=datmod.dataset_list_to_pixel_dataset_list(data_x_list,data_y_list);
     
-    if(show):
-        # Show only the first dataset: data_x_list[0],data_y_list[0]
-        datmod.plot_sample_of_dataset(data_x_list[0],data_y_list[0],'sample.png')
     data_x_list=[];data_y_list=[];
+    
+    if(show):
+        datmod.plot_pixel_dataset_list(data_x_pixel_list,data_y_pixel_list,percent=0.01,png_filepath='scatter3d.png')
 
     X_pixel,y_pixel=datmod.concatenate_list_of_data(data_x_pixel_list,data_y_pixel_list);
     data_x_pixel_list=[];data_y_pixel_list=[];
